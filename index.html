@@ -30,7 +30,6 @@ body{
   display:flex;
   flex-direction:column;
   gap:10px;
-  touch-action:none;
 }
 
 /* 顶部 */
@@ -49,6 +48,7 @@ body{
   padding:6px;
   border-radius:6px;
   justify-content:center;
+  touch-action:none;   /* ✅ 只禁游戏区 */
 }
 
 .cell{
@@ -168,7 +168,6 @@ const gridEl = document.getElementById("grid");
 const scoreEl = document.getElementById("score");
 const statusEl = document.getElementById("status");
 const rankEl = document.getElementById("rank");
-const gameEl = document.querySelector(".game");
 
 function draw(){
   gridEl.innerHTML="";
@@ -282,26 +281,28 @@ document.addEventListener("keydown",e=>{
 });
 
 /* 📱 只在游戏区域拦截滑动 */
-let sx,sy;
+let sx, sy;
 
-gameEl.addEventListener("touchstart",e=>{
+gridEl.addEventListener("touchstart", e=>{
   e.preventDefault();
-  sx=e.touches[0].clientX;
-  sy=e.touches[0].clientY;
+  sx = e.touches[0].clientX;
+  sy = e.touches[0].clientY;
 },{ passive:false });
 
-gameEl.addEventListener("touchend",e=>{
+gridEl.addEventListener("touchend", e=>{
   e.preventDefault();
-  let dx=e.changedTouches[0].clientX-sx;
-  let dy=e.changedTouches[0].clientY-sy;
-  if(Math.abs(dx)>Math.abs(dy)){
-    if(dx>30)move("R");
-    if(dx<-30)move("L");
+  let dx = e.changedTouches[0].clientX - sx;
+  let dy = e.changedTouches[0].clientY - sy;
+
+  if(Math.abs(dx) > Math.abs(dy)){
+    if(dx > 30) move("R");
+    if(dx < -30) move("L");
   }else{
-    if(dy>30)move("D");
-    if(dy<-30)move("U");
+    if(dy > 30) move("D");
+    if(dy < -30) move("U");
   }
 },{ passive:false });
+
 
 function restart(){
   grid.fill(0);
@@ -317,3 +318,4 @@ loadRank();
 </script>
 </body>
 </html>
+
