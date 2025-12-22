@@ -21,14 +21,16 @@ body{
   height:100vh;
 }
 
+/* 🔒 核心：禁用游戏区域的浏览器触摸行为 */
 .game{
   background:#2b2b2b;
   padding:14px;
   border-radius:8px;
-  width:360px;                 /* 🔒 锁死整体宽度 */
+  width:360px;
   display:flex;
   flex-direction:column;
   gap:10px;
+  touch-action:none;
 }
 
 /* 顶部 */
@@ -46,7 +48,7 @@ body{
   background:#555;
   padding:6px;
   border-radius:6px;
-  justify-content:center;      /* 🔒 防止偏移 */
+  justify-content:center;
 }
 
 .cell{
@@ -100,7 +102,7 @@ button{
 .rank-header,
 .rank-row{
   display:grid;
-  grid-template-columns: 28px 1fr 60px 120px;
+  grid-template-columns:28px 1fr 60px 120px;
   gap:6px;
   align-items:center;
 }
@@ -109,7 +111,6 @@ button{
   text-align:right;
   opacity:0.6;
 }
-
 
 .rank-header{
   color:#aaa;
@@ -120,7 +121,6 @@ button{
   overflow-y:auto;
 }
 
-/* 🔒 关键：名字限制 */
 .rank-name{
   overflow:hidden;
   white-space:nowrap;
@@ -135,9 +135,8 @@ button{
   text-align:right;
   opacity:0.8;
   font-size:11px;
-  padding-right:6px;   /* 👈 关键：让时间往左挪 */
+  padding-right:6px;
 }
-
 </style>
 </head>
 
@@ -169,6 +168,7 @@ const gridEl = document.getElementById("grid");
 const scoreEl = document.getElementById("score");
 const statusEl = document.getElementById("status");
 const rankEl = document.getElementById("rank");
+const gameEl = document.querySelector(".game");
 
 function draw(){
   gridEl.innerHTML="";
@@ -273,7 +273,7 @@ async function loadRank(){
   `;
 }
 
-/* 控制 */
+/* 键盘 */
 document.addEventListener("keydown",e=>{
   if(e.key==="ArrowLeft")move("L");
   if(e.key==="ArrowRight")move("R");
@@ -281,12 +281,17 @@ document.addEventListener("keydown",e=>{
   if(e.key==="ArrowDown")move("D");
 });
 
+/* 📱 只在游戏区域拦截滑动 */
 let sx,sy;
-document.addEventListener("touchstart",e=>{
+
+gameEl.addEventListener("touchstart",e=>{
+  e.preventDefault();
   sx=e.touches[0].clientX;
   sy=e.touches[0].clientY;
-});
-document.addEventListener("touchend",e=>{
+},{ passive:false });
+
+gameEl.addEventListener("touchend",e=>{
+  e.preventDefault();
   let dx=e.changedTouches[0].clientX-sx;
   let dy=e.changedTouches[0].clientY-sy;
   if(Math.abs(dx)>Math.abs(dy)){
@@ -296,7 +301,7 @@ document.addEventListener("touchend",e=>{
     if(dy>30)move("D");
     if(dy<-30)move("U");
   }
-});
+},{ passive:false });
 
 function restart(){
   grid.fill(0);
