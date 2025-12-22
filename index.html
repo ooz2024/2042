@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2048 Terminal</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  background:#1e1e1e;
+  color:#e0e0e0;
+  font-family:monospace;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+.game{
+  background:#2b2b2b;
+  padding:14px;
+  border-radius:8px;
+  width:360px;                 /* 🔒 锁死整体宽度 */
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+/* 顶部 */
+.top{
+  display:flex;
+  justify-content:space-between;
+  font-size:14px;
+}
+
+/* 游戏区 */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,70px);
+  gap:6px;
+  background:#555;
+  padding:6px;
+  border-radius:6px;
+  justify-content:center;      /* 🔒 防止偏移 */
+}
+
+.cell{
+  background:#777;
+  height:70px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:26px;
+  font-weight:bold;
+  border-radius:4px;
+}
+
+.v2{background:#d64c4c;color:#fff}
+.v4{background:#2ecc71;color:#fff}
+.v8{background:#3498db;color:#fff}
+.v16{background:#9b59b6;color:#fff}
+.v32{background:#f1c40f}
+.v64{background:#e67e22}
+.v128,.v256,.v512,.v1024,.v2048{
+  background:#1abc9c;color:#000
+}
+
+button{
+  background:#444;
+  color:#fff;
+  border:none;
+  padding:8px;
+  border-radius:4px;
+  cursor:pointer;
+}
+
+/* 排行榜 */
+.rank{
+  background:#1f1f1f;
+  border-radius:6px;
+  padding:8px;
+  font-size:12px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.rank-title{
+  font-weight:bold;
+  text-align:center;
+  border-bottom:1px solid #444;
+  padding-bottom:4px;
+}
+
+.rank-header,
+.rank-row{
+  display:grid;
+  grid-template-columns: 28px 1fr 60px 120px;
+  gap:6px;
+  align-items:center;
+}
+
+.rank-index{
+  text-align:right;
+  opacity:0.6;
+}
+
+
+.rank-header{
+  color:#aaa;
+}
+
+.rank-list{
+  max-height:160px;
+  overflow-y:auto;
+}
+
+/* 🔒 关键：名字限制 */
+.rank-name{
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+
+.rank-score{
+  text-align:center;
+}
+
+.rank-time{
+  text-align:right;
+  opacity:0.8;
+  font-size:11px;
+  padding-right:6px;   /* 👈 关键：让时间往左挪 */
+}
+
+</style>
+</head>
+
+<body>
+<div class="game">
+  <div class="top">
+    <div>得分：<span id="score">0</span></div>
+    <div id="status"></div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <button onclick="restart()">重新开始</button>
+
+  <div class="rank" id="rank">正在加载排行榜…</div>
+</div>
+
+<script>
+/* Supabase */
+const supabaseUrl = "https://hivlyphuvzvwnobnoqdl.supabase.co";
+const supabaseKey = "sb_publishable_B3tNHsrkG6U2wu9jW64smA_XtfaDNM0";
+const db = supabase.createClient(supabaseUrl, supabaseKey);
+
+/* 游戏 */
+let grid = Array(16).fill(0);
+let score = 0;
+
+const gridEl = document.getElementById("grid");
+const scoreEl = document.getElementById("score");
+const statusEl = document.getElementById("status");
+const rankEl = document.getElementById("rank");
+
+function draw(){
+  gridEl.innerHTML="";
+  grid.forEach(v=>{
+    let d=document.createElement("div");
+    d.className="cell"+(v?" v"+v:"");
+    d.textContent=v||"";
+    gridEl.appendChild(d);
+  });
+  scoreEl.textContent=score;
+}
+
+function randomAdd(){
+  let e=grid.map((v,i)=>v===0?i:null).filter(v=>v!==null);
+  if(!e.length)return;
+  grid[e[Math.floor(Math.random()*e.length)]]=Math.random()<0.9?2:4;
+}
+
+function slide(arr){
+  arr=arr.filter(v=>v);
+  for(let i=0;i<arr.length-1;i++){
+    if(arr[i]===arr[i+1]){
+      arr[i]*=2;
+      score+=arr[i];
+      arr[i+1]=0;
+    }
+  }
+  arr=arr.filter(v=>v);
+  while(arr.length<4)arr.push(0);
+  return arr;
+}
+
+function move(dir){
+  let moved=false;
+  let g=[...grid];
+  const idx=(i,j)=>{
+    if(dir==="L")return i*4+j;
+    if(dir==="R")return i*4+3-j;
+    if(dir==="U")return j*4+i;
+    return 12-j*4+i;
+  };
+  for(let i=0;i<4;i++){
+    let line=[];
+    for(let j=0;j<4;j++)line.push(g[idx(i,j)]);
+    let s=slide(line);
+    for(let j=0;j<4;j++){
+      let k=idx(i,j);
+      if(grid[k]!==s[j]){grid[k]=s[j];moved=true;}
+    }
+  }
+  if(moved){
+    randomAdd();
+    draw();
+    checkOver();
+  }
+}
+
+function checkOver(){
+  if(grid.includes(0))return;
+  for(let i=0;i<16;i++){
+    if(i%4<3 && grid[i]===grid[i+1])return;
+    if(i<12 && grid[i]===grid[i+4])return;
+  }
+  statusEl.textContent="游戏结束";
+  saveScore();
+}
+
+/* 排行榜 */
+function formatTime(t){
+  return new Date(t).toLocaleString("zh-CN",{hour12:false});
+}
+
+async function saveScore(){
+  let name=prompt("输入你的名字","匿名玩家");
+  if(!name)return;
+  await db.from("scores").insert({ name, score });
+  loadRank();
+}
+
+async function loadRank(){
+  let { data } = await db
+    .from("scores")
+    .select("*")
+    .order("score",{ ascending:false })
+    .limit(50);
+
+  rankEl.innerHTML=`
+    <div class="rank-title">🌍 全球排行榜</div>
+    <div class="rank-header">
+      <div>#</div><div>名字</div><div>得分</div><div>时间</div>
+    </div>
+    <div class="rank-list">
+      ${data.map((v,i)=>`
+        <div class="rank-row">
+          <div class="rank-index">${i+1}</div>
+          <div class="rank-name" title="${v.name}">${v.name}</div>
+          <div class="rank-score">${v.score}</div>
+          <div class="rank-time">${formatTime(v.created_at)}</div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+/* 控制 */
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowLeft")move("L");
+  if(e.key==="ArrowRight")move("R");
+  if(e.key==="ArrowUp")move("U");
+  if(e.key==="ArrowDown")move("D");
+});
+
+let sx,sy;
+document.addEventListener("touchstart",e=>{
+  sx=e.touches[0].clientX;
+  sy=e.touches[0].clientY;
+});
+document.addEventListener("touchend",e=>{
+  let dx=e.changedTouches[0].clientX-sx;
+  let dy=e.changedTouches[0].clientY-sy;
+  if(Math.abs(dx)>Math.abs(dy)){
+    if(dx>30)move("R");
+    if(dx<-30)move("L");
+  }else{
+    if(dy>30)move("D");
+    if(dy<-30)move("U");
+  }
+});
+
+function restart(){
+  grid.fill(0);
+  score=0;
+  statusEl.textContent="";
+  randomAdd();randomAdd();
+  draw();
+}
+
+/* 启动 */
+restart();
+loadRank();
+</script>
+</body>
+</html>
