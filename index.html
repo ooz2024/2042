@@ -273,11 +273,15 @@ async function loadRank(){
 }
 
 /* 键盘 */
-document.addEventListener("keydown",e=>{
-  if(e.key==="ArrowLeft")move("L");
-  if(e.key==="ArrowRight")move("R");
-  if(e.key==="ArrowUp")move("U");
-  if(e.key==="ArrowDown")move("D");
+document.addEventListener("keydown", e => {
+  if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) {
+    e.preventDefault(); // 🔒 禁止浏览器滚页面
+  }
+
+  if(e.key==="ArrowLeft") move("L");
+  if(e.key==="ArrowRight") move("R");
+  if(e.key==="ArrowUp") move("U");
+  if(e.key==="ArrowDown") move("D");
 });
 
 /* 📱 只在游戏区域拦截滑动 */
