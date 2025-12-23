@@ -140,6 +140,45 @@ button{
   font-size:11px;
   padding-right:6px;
 }
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.65);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+
+.modal-box{
+  background:#2b2b2b;
+  padding:16px;
+  border-radius:8px;
+  width:260px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  text-align:center;
+}
+
+.modal-title{
+  font-size:16px;
+  font-weight:bold;
+}
+
+.modal-score{
+  font-size:14px;
+  opacity:0.9;
+}
+
+.modal-box input{
+  padding:6px;
+  border:none;
+  border-radius:4px;
+}
+
+
 </style>
 </head>
 
@@ -152,10 +191,27 @@ button{
 
   <div class="grid" id="grid"></div>
 
-  <button onclick="restart()">重新开始</button>
+  <button onclick="restart()">不服? 再来!</button>
 
-  <div class="rank" id="rank">正在加载排行榜…</div>
+  <div class="rank" id="rank">正在窃取组织机密…</div>
 </div>
+
+<div class="modal" id="modal">
+  <div class="modal-box" style="width:350px; text-align:left;"> <!-- 弹窗宽度加大，整体文字靠左 -->
+    <div class="modal-title" style="text-align:center;">游戏结束! Game over</div> <!-- 标题居中 -->
+    <div class="modal-score">
+      你的得分是：<span id="finalScore"></span>
+    </div>
+    <div style="font-size:13px; opacity:0.8; margin-bottom:4px;">大侠请留名! 组织上会记住你的</div>
+    <input id="playerName" placeholder="匿名玩家" maxlength="16" style="width:100%;">
+    <div style="display:flex; gap:8px; justify-content:center; margin-top:8px;">
+      <button onclick="submitScore()">登记组织</button>
+      <button onclick="closeModal()">概不留名</button>
+    </div>
+  </div>
+</div>
+
+
 
 <script>
 /* Supabase */
@@ -236,7 +292,7 @@ function checkOver(){
   }
 
   statusEl.textContent = "游戏结束";
-  setTimeout(saveScore, 100);
+  openModal();
 }
 
 
@@ -256,17 +312,8 @@ function formatTime(t){
 }
 
 
-async function saveScore(){
-  let name = prompt(`游戏结束！\n你的得分是：${score}\n\n请输入你的名字：`, "匿名玩家");
-  if(!name) return;
 
-  await db.from("scores").insert({
-    name,
-    score
-  });
 
-  loadRank();
-}
 
 async function loadRank(){
   let { data } = await db
@@ -276,7 +323,7 @@ async function loadRank(){
     .limit(50);
 
   rankEl.innerHTML=`
-    <div class="rank-title">🌍 全球排行榜</div>
+    <div class="rank-title">🌍 组织排行榜</div>
     <div class="rank-header">
       <div>#</div><div>名字</div><div>得分</div><div>时间</div>
     </div>
@@ -336,6 +383,29 @@ function restart(){
   randomAdd();randomAdd();
   draw();
 }
+
+function openModal(){
+  document.getElementById("finalScore").textContent = score;
+  document.getElementById("modal").style.display = "flex";
+}
+
+async function submitScore(){
+  let name = document.getElementById("playerName").value.trim() || "匿名玩家";
+
+  await db.from("scores").insert({
+    name,
+    score
+  });
+
+  document.getElementById("modal").style.display = "none";
+  loadRank();
+}
+
+function closeModal(){
+  document.getElementById("modal").style.display = "none";
+}
+
+
 
 /* 启动 */
 restart();
