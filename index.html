@@ -232,22 +232,37 @@ function checkOver(){
     if(i%4<3 && grid[i]===grid[i+1])return;
     if(i<12 && grid[i]===grid[i+4])return;
   }
-  statusEl.textContent="游戏结束";
-  saveScore();
+
+  statusEl.textContent = "游戏结束";
+  setTimeout(saveScore, 100);
 }
+
 
 /* 排行榜 */
 function formatTime(t){
-  return new Date(t).toLocaleString("zh-CN", {
-    hour12: false,
-    timeZone: "Asia/Shanghai"
-  });
+  const utc = new Date(t).getTime();
+  const beijing = new Date(utc + 8 * 60 * 60 * 1000);
+
+  const Y = beijing.getFullYear();
+  const M = String(beijing.getMonth() + 1).padStart(2, "0");
+  const D = String(beijing.getDate()).padStart(2, "0");
+  const h = String(beijing.getHours()).padStart(2, "0");
+  const m = String(beijing.getMinutes()).padStart(2, "0");
+  const s = String(beijing.getSeconds()).padStart(2, "0");
+
+  return `${Y}-${M}-${D} ${h}:${m}:${s}`;
 }
 
+
 async function saveScore(){
-  let name=prompt("输入你的名字","匿名玩家");
-  if(!name)return;
-  await db.from("scores").insert({ name, score });
+  let name = prompt(`游戏结束！\n你的得分是：${score}\n\n请输入你的名字：`, "匿名玩家");
+  if(!name) return;
+
+  await db.from("scores").insert({
+    name,
+    score
+  });
+
   loadRank();
 }
 
