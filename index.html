@@ -202,10 +202,10 @@ button{
     <div class="modal-score">
       你的得分是：<span id="finalScore"></span>
     </div>
-    <div style="font-size:13px; opacity:0.8; margin-bottom:4px;">大侠请留名! 组织上会记住你的</div>
-    <input id="playerName" placeholder="匿名玩家" maxlength="16" style="width:100%;">
+    <div style="font-size:13px; opacity:0.8; margin-bottom:4px;">大侠请留名! 组织上会记住你的...</div>
+    <input id="playerName" placeholder="匿名大侠" maxlength="16" style="width:100%;">
     <div style="display:flex; gap:8px; justify-content:center; margin-top:8px;">
-      <button onclick="submitScore()">登记组织</button>
+      <button onclick="submitScore()">记入组织</button>
       <button onclick="closeModal()">概不留名</button>
     </div>
   </div>
@@ -323,7 +323,7 @@ async function loadRank(){
     .limit(50);
 
   rankEl.innerHTML=`
-    <div class="rank-title">🌍 组织排行榜</div>
+    <div class="rank-title">🌍 组织排行榜 ⭐</div>
     <div class="rank-header">
       <div>#</div><div>名字</div><div>得分</div><div>时间</div>
     </div>
@@ -390,7 +390,7 @@ function openModal(){
 }
 
 async function submitScore(){
-  let name = document.getElementById("playerName").value.trim() || "匿名玩家";
+  let name = document.getElementById("playerName").value.trim() || "匿名大侠";
 
   await db.from("scores").insert({
     name,
