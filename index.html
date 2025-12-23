@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>2048 Terminal</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
 
 <style>
 *{ box-sizing:border-box; }
@@ -237,7 +238,10 @@ function checkOver(){
 
 /* 排行榜 */
 function formatTime(t){
-  return new Date(t).toLocaleString("zh-CN",{hour12:false});
+  return new Date(t).toLocaleString("zh-CN", {
+    hour12: false,
+    timeZone: "Asia/Shanghai"
+  });
 }
 
 async function saveScore(){
