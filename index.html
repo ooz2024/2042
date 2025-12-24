@@ -116,10 +116,14 @@ button{
   align-items:center;
 }
 
-.rank-index{
-  text-align:right;
-  opacity:0.6;
+
+/* 排行列颜色 */
+.rank-index {
+  text-align: right;
+  opacity: 1;        /* 不再暗淡 */
+  color: #fff;       /* 白色或者你喜欢的亮色 */
 }
+
 
 .rank-header{
   color:#aaa;
@@ -184,13 +188,17 @@ button{
   border-radius:4px;
 }
 
-.hint{
-  text-align:center;
-  font-size:12px;
-  opacity:0.6;
-  letter-spacing:2px;
-  user-select:none;
+
+/* 提示行样式 */
+.hint {
+  text-align: center;
+  font-size: 12px;
+  opacity: 1;        /* 去掉暗淡 */
+  color: #fff;       /* 或其他亮色 */
+  letter-spacing: 2px;
+  user-select: none;
 }
+
 
 @keyframes pop {
   0% { transform: scale(0.8); }
@@ -405,20 +413,29 @@ async function loadRank(){
   rankEl.innerHTML=`
     <div class="rank-title"> 🌍 组织排行榜 ⭐ </div>
     <div class="rank-header">
-      <div>#</div><div>名字</div><div>得分</div><div>时间</div>
+      <div class="rank-index">#</div>
+      <div class="rank-name">玩家</div>
+      <div class="rank-score">分数</div>
+      <div class="rank-time">时间</div>
     </div>
-    <div class="rank-list">
-      ${data.map((v,i)=>`
-        <div class="rank-row">
-          <div class="rank-index">${i+1}</div>
-          <div class="rank-name" title="${v.name}">${v.name}</div>
-          <div class="rank-score">${v.score}</div>
-          <div class="rank-time">${formatTime(v.created_at)}</div>
-        </div>
-      `).join("")}
-    </div>
+<div class="rank-list">
+  ${data.map((v,i)=>{
+    let displayIndex = i===0 ? "👑1" : i+1;  // 第一名显示王冠
+    let nameColor = i === 0 ? "#FFD700" : i === 1 ? "#C0C0C0" : i === 2 ? "#CD7F32" : "#e0e0e0"; // 前三名金、银、铜，其余默认
+    return `
+      <div class="rank-row">
+        <div class="rank-index">${displayIndex}</div>
+        <div class="rank-name" style="color:${nameColor};" title="${v.name}">${v.name}</div>
+        <div class="rank-score">${v.score}</div>
+        <div class="rank-time">${formatTime(v.created_at)}</div>
+      </div>
+    `;
+  }).join("")}
+</div>
+
   `;
 }
+
 
 
 
@@ -528,4 +545,5 @@ loadRank();
 </script>
 </body>
 </html>
+
 
