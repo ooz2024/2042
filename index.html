@@ -200,6 +200,20 @@ button{
   animation: pop 0.12s ease;
 }
 
+@keyframes spawn {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.cell.spawn{
+  animation: spawn 0.18s ease-out;
+}
 
 
 </style>
@@ -253,6 +267,8 @@ const db = supabase.createClient(supabaseUrl, supabaseKey);
 let grid = Array(16).fill(0);
 let score = 0;
 let gameOver = false;
+let spawnedIndex = null;
+
 
 
 const gridEl = document.getElementById("grid");
@@ -269,25 +285,35 @@ function draw(){
     let d = document.createElement("div");
     d.className = "cell" + (v ? " v"+v : "");
 
-    // 🔥 核心：这一格和上一次不一样，才给动画
+    // 移动 / 合并动画
     if(v !== lastGrid[i]){
       d.classList.add("moved");
+    }
+
+    // 🆕 新生成方块动画
+    if(i === spawnedIndex){
+      d.classList.add("spawn");
     }
 
     d.textContent = v || "";
     gridEl.appendChild(d);
   });
 
-  lastGrid = [...grid];   // 记住这一次的状态
+  lastGrid = [...grid];
+  spawnedIndex = null;     // 🔥 非常重要：清掉
   scoreEl.textContent = score;
 }
 
 
+
 function randomAdd(){
-  let e=grid.map((v,i)=>v===0?i:null).filter(v=>v!==null);
-  if(!e.length)return;
-  grid[e[Math.floor(Math.random()*e.length)]]=Math.random()<0.9?2:4;
+  let e = grid.map((v,i)=>v===0?i:null).filter(v=>v!==null);
+  if(!e.length) return;
+
+  spawnedIndex = e[Math.floor(Math.random()*e.length)];
+  grid[spawnedIndex] = Math.random() < 0.9 ? 2 : 4;
 }
+
 
 function slide(arr){
   arr=arr.filter(v=>v);
@@ -339,7 +365,7 @@ function checkOver(){
   }
 
   gameOver = true;   // 🔒 锁死操作
-  statusEl.textContent = "游戏结束☠️☠️☠️";
+  statusEl.textContent = "Game over☠️☠️☠️";
   openModal();
 }
 
