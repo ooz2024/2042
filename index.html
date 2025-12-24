@@ -63,7 +63,12 @@ body{
   font-size:26px;
   font-weight:bold;
   border-radius:4px;
+
+  transition:
+    transform 0.12s ease,
+    background-color 0.15s ease;
 }
+
 
 .v2{background:#d64c4c;color:#fff}
 .v4{background:#2ecc71;color:#fff}
@@ -178,8 +183,31 @@ button{
   border-radius:4px;
 }
 
+.hint{
+  text-align:center;
+  font-size:12px;
+  opacity:0.6;
+  letter-spacing:2px;
+  user-select:none;
+}
+
+@keyframes pop {
+  0% { transform: scale(0.8); }
+  100% { transform: scale(1); }
+}
+
+.cell.moved{
+  animation: pop 0.12s ease;
+}
+
+
 
 </style>
+
+
+
+
+
 </head>
 
 <body>
@@ -191,19 +219,21 @@ button{
 
   <div class="grid" id="grid"></div>
 
-  <button onclick="restart()">不服? 再来!</button>
+  <div class="hint">⬆️ ⬅️ ⬇️ ➡️ 移动方块</div>
+
+  <button onclick="restart()">重新开始</button>
 
   <div class="rank" id="rank">正在窃取组织机密…</div>
 </div>
 
 <div class="modal" id="modal">
   <div class="modal-box" style="width:350px; text-align:left;"> <!-- 弹窗宽度加大，整体文字靠左 -->
-    <div class="modal-title" style="text-align:center;">游戏结束! Game over</div> <!-- 标题居中 -->
+    <div class="modal-title" style="text-align:center;">Game over</div> <!-- 标题居中 -->
     <div class="modal-score">
       你的得分是：<span id="finalScore"></span>
     </div>
-    <div style="font-size:13px; opacity:0.8; margin-bottom:4px;">大侠请留名! 组织上会记住你的...</div>
-    <input id="playerName" placeholder="匿名大侠" maxlength="16" style="width:100%;">
+    <div style="font-size:13px; opacity:0.8; margin-bottom:4px;">请输入昵称！组织上会记住你的...</div>
+    <input id="playerName" placeholder="匿名玩家" maxlength="16" style="width:100%;">
     <div style="display:flex; gap:8px; justify-content:center; margin-top:8px;">
       <button onclick="submitScore()">记入组织</button>
       <button onclick="closeModal()">概不留名</button>
@@ -222,22 +252,36 @@ const db = supabase.createClient(supabaseUrl, supabaseKey);
 /* 游戏 */
 let grid = Array(16).fill(0);
 let score = 0;
+let gameOver = false;
+
 
 const gridEl = document.getElementById("grid");
 const scoreEl = document.getElementById("score");
 const statusEl = document.getElementById("status");
 const rankEl = document.getElementById("rank");
 
+let lastGrid = Array(16).fill(0);
+
 function draw(){
   gridEl.innerHTML="";
-  grid.forEach(v=>{
-    let d=document.createElement("div");
-    d.className="cell"+(v?" v"+v:"");
-    d.textContent=v||"";
+
+  grid.forEach((v,i)=>{
+    let d = document.createElement("div");
+    d.className = "cell" + (v ? " v"+v : "");
+
+    // 🔥 核心：这一格和上一次不一样，才给动画
+    if(v !== lastGrid[i]){
+      d.classList.add("moved");
+    }
+
+    d.textContent = v || "";
     gridEl.appendChild(d);
   });
-  scoreEl.textContent=score;
+
+  lastGrid = [...grid];   // 记住这一次的状态
+  scoreEl.textContent = score;
 }
+
 
 function randomAdd(){
   let e=grid.map((v,i)=>v===0?i:null).filter(v=>v!==null);
@@ -260,8 +304,11 @@ function slide(arr){
 }
 
 function move(dir){
+  if(gameOver) return;   // 🚫 已结束，什么都不干
+
   let moved=false;
   let g=[...grid];
+
   const idx=(i,j)=>{
     if(dir==="L")return i*4+j;
     if(dir==="R")return i*4+3-j;
@@ -291,9 +338,11 @@ function checkOver(){
     if(i<12 && grid[i]===grid[i+4])return;
   }
 
-  statusEl.textContent = "游戏结束";
+  gameOver = true;   // 🔒 锁死操作
+  statusEl.textContent = "游戏结束☠️☠️☠️";
   openModal();
 }
+
 
 
 /* 排行榜 */
@@ -323,7 +372,7 @@ async function loadRank(){
     .limit(50);
 
   rankEl.innerHTML=`
-    <div class="rank-title">🌍 组织排行榜 ⭐</div>
+    <div class="rank-title"> 🌍 组织排行榜 ⭐ </div>
     <div class="rank-header">
       <div>#</div><div>名字</div><div>得分</div><div>时间</div>
     </div>
@@ -340,57 +389,86 @@ async function loadRank(){
   `;
 }
 
-/* 键盘 */
+
+
+/* ======================
+   键盘方向键控制
+   ====================== */
 document.addEventListener("keydown", e => {
+  // 阻止方向键导致页面滚动
   if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) {
-    e.preventDefault(); // 🔒 禁止浏览器滚页面
+    e.preventDefault();
   }
 
+  // 根据方向键执行对应移动
   if(e.key==="ArrowLeft") move("L");
   if(e.key==="ArrowRight") move("R");
   if(e.key==="ArrowUp") move("U");
   if(e.key==="ArrowDown") move("D");
 });
 
-/* 📱 只在游戏区域拦截滑动 */
+
+/* ======================
+   触摸滑动控制（手机端）
+   只绑定在游戏区域
+   ====================== */
 let sx, sy;
 
+// 手指按下，记录起始坐标
 gridEl.addEventListener("touchstart", e=>{
   e.preventDefault();
   sx = e.touches[0].clientX;
   sy = e.touches[0].clientY;
 },{ passive:false });
 
+// 手指抬起，计算滑动方向
 gridEl.addEventListener("touchend", e=>{
   e.preventDefault();
   let dx = e.changedTouches[0].clientX - sx;
   let dy = e.changedTouches[0].clientY - sy;
 
+  // 横向滑动
   if(Math.abs(dx) > Math.abs(dy)){
     if(dx > 30) move("R");
     if(dx < -30) move("L");
-  }else{
+  }
+  // 纵向滑动
+  else{
     if(dy > 30) move("D");
     if(dy < -30) move("U");
   }
 },{ passive:false });
 
 
+/* ======================
+   游戏重置（重新开始）
+   ====================== */
 function restart(){
-  grid.fill(0);
-  score=0;
-  statusEl.textContent="";
-  randomAdd();randomAdd();
-  draw();
+  grid.fill(0);          // 清空棋盘
+  score = 0;             // 重置得分
+  gameOver = false;      // 解锁操作
+  statusEl.textContent = "";
+
+  randomAdd();           // 生成初始两个数字
+  randomAdd();
+  draw();                // 重绘界面
 }
 
+
+/* ======================
+   游戏结束弹窗
+   ====================== */
 function openModal(){
   document.getElementById("finalScore").textContent = score;
   document.getElementById("modal").style.display = "flex";
 }
 
+
+/* ======================
+   提交成绩到排行榜
+   ====================== */
 async function submitScore(){
-  let name = document.getElementById("playerName").value.trim() || "匿名大侠";
+  let name = document.getElementById("playerName").value.trim() || "匿名玩家";
 
   await db.from("scores").insert({
     name,
@@ -398,20 +476,25 @@ async function submitScore(){
   });
 
   document.getElementById("modal").style.display = "none";
-  loadRank();
+  loadRank();   // 刷新排行榜
 }
 
+
+/* ======================
+   关闭弹窗但不提交
+   ====================== */
 function closeModal(){
   document.getElementById("modal").style.display = "none";
 }
 
 
-
-/* 启动 */
+/* ======================
+   页面加载后启动游戏
+   ====================== */
 restart();
 loadRank();
+
 </script>
 </body>
 </html>
-
 
