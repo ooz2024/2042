@@ -64,6 +64,7 @@ body{
   font-weight:bold;
   border-radius:4px;
 
+
   transition:
     transform 0.12s ease,
     background-color 0.15s ease;
@@ -196,8 +197,10 @@ button{
   100% { transform: scale(1); }
 }
 
+
+/*移动 合并动画*/
 .cell.moved{
-  animation: pop 0.12s ease;
+  animation: pop 0.18s ease;
 }
 
 @keyframes spawn {
@@ -211,8 +214,10 @@ button{
   }
 }
 
+
+/*新生成方块动画*/
 .cell.spawn{
-  animation: spawn 0.18s ease-out;
+  animation: spawn 0.2s ease-out;
 }
 
 
@@ -237,7 +242,7 @@ button{
 
   <button onclick="restart()">重新开始</button>
 
-  <div class="rank" id="rank">正在窃取组织机密…</div>
+  <div class="rank" id="rank">正在读取组织机密…</div>
 </div>
 
 <div class="modal" id="modal">
