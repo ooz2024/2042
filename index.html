@@ -5,7 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>2048</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
+<script>
+if (!window.supabase) {
+  document.write('<script src="https://unpkg.com/@supabase/supabase-js@2.39.7"><\/script>');
+}
+</script>
+<script>
+if (!window.supabase) {
+  document.write('<script src="https://cdn.staticfile.org/supabase-js/2.39.7/supabase.min.js"><\/script>');
+}
+</script>
+<script>
+if (!window.supabase) {
+  document.write('<script src="https://cdn.bootcdn.net/ajax/libs/supabase-js/2.39.7/supabase.min.js"><\/script>');
+}
+</script>
+
 
 
 <style>
@@ -429,6 +445,7 @@ loadRank();
 </script>
 </body>
 </html>
+
 
 
 
