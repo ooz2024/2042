@@ -3,27 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>2048</title>
+<title>2048 - 组织机密版</title>
 
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 *{ box-sizing:border-box; }
 
 body{
   margin:0;
-  background:#1e1e1e;
-  color:#e0e0e0;
+  background:
+    radial-gradient(circle at top, #2a3a2a 0%, #0f1410 60%),
+    linear-gradient(180deg, #1a1a1a, #0e0e0e);
+  color:#f5f5f5;
   font-family:monospace;
   display:flex;
   justify-content:center;
-  padding:40px 0;   /* 🔥 关键 */
+  padding:40px 0;
+  overflow-x: hidden;
 }
 
-
-/* 🔒 核心：禁用游戏区域的浏览器触摸行为 */
 .game{
+  position: relative;
+  z-index: 2;
   background:#2b2b2b;
   padding:14px;
   border-radius:8px;
@@ -34,15 +36,12 @@ body{
   margin:0 auto;
 }
 
-
-/* 顶部 */
 .top{
   display:flex;
   justify-content:space-between;
   font-size:14px;
 }
 
-/* 游戏区 */
 .grid{
   display:grid;
   grid-template-columns:repeat(4,70px);
@@ -51,7 +50,7 @@ body{
   padding:6px;
   border-radius:6px;
   justify-content:center;
-  touch-action:none;   /* ✅ 只禁游戏区 */
+  touch-action:none;
 }
 
 .cell{
@@ -63,22 +62,26 @@ body{
   font-size:26px;
   font-weight:bold;
   border-radius:4px;
-
-
-  transition:
-    transform 0.12s ease,
-    background-color 0.15s ease;
+  transition: transform 0.12s ease, background-color 0.15s ease;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
 }
 
-
-.v2{background:#d64c4c;color:#fff}
-.v4{background:#2ecc71;color:#fff}
-.v8{background:#3498db;color:#fff}
-.v16{background:#9b59b6;color:#fff}
-.v32{background:#f1c40f}
-.v64{background:#e67e22}
-.v128,.v256,.v512,.v1024,.v2048{
-  background:#1abc9c;color:#000
+/* 方块配色系统 */
+.v2    { background:#e74c3c; color:#fff; }
+.v4    { background:#27ae60; color:#fff; }
+.v8    { background:#f1c40f; color:#000; }
+.v16   { background:#e67e22; color:#fff; }
+.v32   { background:#d35400; color:#fff; }
+.v64   { background:#c0392b; color:#fff; }
+.v128  { background:#1abc9c; color:#fff; box-shadow: 0 0 10px #1abc9c; }
+.v256  { background:#3498db; color:#fff; box-shadow: 0 0 12px #3498db; }
+.v512  { background:#9b59b6; color:#fff; box-shadow: 0 0 15px #9b59b6; }
+.v1024 { background:#f39c12; color:#fff; box-shadow: 0 0 20px #f39c12; }
+.v2048, .v4096, .v8192, .v16384 { 
+  background: #111; 
+  color: #00ffcc; 
+  border: 2px solid #00ffcc; 
+  box-shadow: 0 0 25px #00ffcc; 
 }
 
 button{
@@ -90,9 +93,9 @@ button{
   cursor:pointer;
 }
 
-/* 排行榜 */
+/* 🌙 回归老版本样式的排行榜容器 */
 .rank{
-  background:#1f1f1f;
+  background:#1f1f1f; /* 老版的深黑色 */
   border-radius:6px;
   padding:8px;
   font-size:12px;
@@ -101,56 +104,45 @@ button{
   gap:6px;
 }
 
-.rank-title{
-  font-weight:bold;
-  text-align:center;
-  border-bottom:1px solid #444;
-  padding-bottom:4px;
+/* 新版功能：居中标题与刷新按钮 */
+.rank-title { 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; 
+  font-weight: bold; 
+  border-bottom: 1px solid #444; 
+  padding-bottom: 4px; 
 }
 
-.rank-header,
-.rank-row{
-  display:grid;
-  grid-template-columns:28px 1fr 60px 120px;
-  gap:6px;
-  align-items:center;
+.refresh-btn {
+  background: #333;
+  color: #fff;
+  border: none;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 10px;
+  transition: background 0.2s;
+}
+.refresh-btn:hover { background: #555; }
+.rank-spacer { width: 35px; } /* 保持平衡 */
+
+/* 回归老版本 Grid 列宽 */
+.rank-header, .rank-row { 
+  display: grid; 
+  grid-template-columns: 28px 1fr 60px 120px; 
+  gap: 6px; 
+  align-items: center; 
 }
 
+.rank-header { color:#aaa; }
+.rank-index { text-align: right; color: #fff; }
+.rank-list { max-height:160px; overflow-y:auto; }
+.rank-name { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.rank-score { text-align:center; }
+.rank-time { text-align:right; opacity:0.8; font-size:11px; padding-right:6px; white-space: nowrap;}
 
-/* 排行列颜色 */
-.rank-index {
-  text-align: right;
-  opacity: 1;        /* 不再暗淡 */
-  color: #fff;       /* 白色或者你喜欢的亮色 */
-}
-
-
-.rank-header{
-  color:#aaa;
-}
-
-.rank-list{
-  max-height:160px;
-  overflow-y:auto;
-}
-
-.rank-name{
-  overflow:hidden;
-  white-space:nowrap;
-  text-overflow:ellipsis;
-}
-
-.rank-score{
-  text-align:center;
-}
-
-.rank-time{
-  text-align:right;
-  opacity:0.8;
-  font-size:11px;
-  padding-right:6px;
-}
-
+/* 弹窗 */
 .modal{
   position:fixed;
   inset:0;
@@ -158,109 +150,57 @@ button{
   display:none;
   align-items:center;
   justify-content:center;
-  z-index:999;
+  z-index:1100;
 }
-
 .modal-box{
   background:#2b2b2b;
   padding:16px;
   border-radius:8px;
-  width:260px;
+  width:350px;
   display:flex;
   flex-direction:column;
   gap:10px;
-  text-align:center;
 }
 
-.modal-title{
-  font-size:16px;
-  font-weight:bold;
+.hint { text-align: center; font-size: 12px; color: #fff; letter-spacing: 2px; }
+
+@keyframes pop { 0% { transform: scale(0.8); } 100% { transform: scale(1); } }
+.cell.moved{ animation: pop 0.12s ease; }
+@keyframes spawn { 0% { transform: scale(0.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.cell.spawn{ animation: spawn 0.2s ease-out; }
+
+/* 雪花 */
+.snow-container { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+.snow-container span { position: absolute; top: -20px; animation: fall linear infinite; filter: blur(1px); }
+@keyframes fall {
+  0% { transform: translateY(-20px) rotate(0deg); opacity: 0; }
+  10% { opacity: var(--op, 0.4); }
+  90% { opacity: var(--op, 0.4); }
+  100% { transform: translateY(110vh) translateX(var(--sw, 50px)) rotate(var(--r, 360deg)); opacity: 0; }
 }
-
-.modal-score{
-  font-size:14px;
-  opacity:0.9;
-}
-
-.modal-box input{
-  padding:6px;
-  border:none;
-  border-radius:4px;
-}
-
-
-/* 提示行样式 */
-.hint {
-  text-align: center;
-  font-size: 12px;
-  opacity: 1;        /* 去掉暗淡 */
-  color: #fff;       /* 或其他亮色 */
-  letter-spacing: 2px;
-  user-select: none;
-}
-
-
-@keyframes pop {
-  0% { transform: scale(0.8); }
-  100% { transform: scale(1); }
-}
-
-
-/*移动 合并动画*/
-.cell.moved{
-  animation: pop 0.18s ease;
-}
-
-@keyframes spawn {
-  0% {
-    transform: scale(0.3);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-
-/*新生成方块动画*/
-.cell.spawn{
-  animation: spawn 0.2s ease-out;
-}
-
-
 </style>
-
-
-
-
-
 </head>
 
 <body>
+<div class="snow-container" id="snow-bg"></div>
+
 <div class="game">
   <div class="top">
     <div>得分：<span id="score">0</span></div>
     <div id="status"></div>
   </div>
-
   <div class="grid" id="grid"></div>
-
   <div class="hint">⬆️ ⬅️ ⬇️ ➡️ 移动方块</div>
-
   <button onclick="restart()">重新开始</button>
-
   <div class="rank" id="rank">正在读取组织机密…</div>
 </div>
 
 <div class="modal" id="modal">
-  <div class="modal-box" style="width:350px; text-align:left;"> <!-- 弹窗宽度加大，整体文字靠左 -->
-    <div class="modal-title" style="text-align:center;">Game over</div> <!-- 标题居中 -->
-    <div class="modal-score">
-      你的得分是：<span id="finalScore"></span>
-    </div>
-    <div style="font-size:13px; opacity:0.8; margin-bottom:4px;">请输入昵称！组织上会记住你的...</div>
-    <input id="playerName" placeholder="匿名玩家" maxlength="16" style="width:100%;">
+  <div class="modal-box">
+    <div class="modal-title" style="text-align:center; font-weight:bold;">Game over!</div>
+    <div class="modal-score">你的得分是：<span id="finalScore"></span></div>
+    <div style="font-size:13px; opacity:0.8; margin-bottom:4px;">请输入昵称，组织上会记住你的!</div>
+    <input id="playerName" placeholder="匿名玩家" maxlength="16" style="width:100%; padding:6px; border-radius:4px; border:none;">
     <div style="display:flex; gap:8px; justify-content:center; margin-top:8px;">
       <button onclick="submitScore()">记入组织</button>
       <button onclick="closeModal()">概不留名</button>
@@ -268,74 +208,48 @@ button{
   </div>
 </div>
 
-
-
 <script>
-/* Supabase */
 const supabaseUrl = "https://hivlyphuvzvwnobnoqdl.supabase.co";
 const supabaseKey = "sb_publishable_B3tNHsrkG6U2wu9jW64smA_XtfaDNM0";
 const db = supabase.createClient(supabaseUrl, supabaseKey);
 
-/* 游戏 */
 let grid = Array(16).fill(0);
 let score = 0;
 let gameOver = false;
 let spawnedIndex = null;
-
-
+let lastGrid = Array(16).fill(0);
 
 const gridEl = document.getElementById("grid");
 const scoreEl = document.getElementById("score");
-const statusEl = document.getElementById("status");
 const rankEl = document.getElementById("rank");
-
-let lastGrid = Array(16).fill(0);
 
 function draw(){
   gridEl.innerHTML="";
-
   grid.forEach((v,i)=>{
     let d = document.createElement("div");
-    d.className = "cell" + (v ? " v"+v : "");
-
-    // 移动 / 合并动画
-    if(v !== lastGrid[i]){
-      d.classList.add("moved");
-    }
-
-    // 🆕 新生成方块动画
-    if(i === spawnedIndex){
-      d.classList.add("spawn");
-    }
-
+    let colorClass = v > 2048 ? "v2048" : "v"+v;
+    d.className = "cell" + (v ? " " + colorClass : "");
+    if(v !== lastGrid[i]) d.classList.add("moved");
+    if(i === spawnedIndex) d.classList.add("spawn");
     d.textContent = v || "";
     gridEl.appendChild(d);
   });
-
   lastGrid = [...grid];
-  spawnedIndex = null;     // 🔥 非常重要：清掉
+  spawnedIndex = null;
   scoreEl.textContent = score;
 }
-
-
 
 function randomAdd(){
   let e = grid.map((v,i)=>v===0?i:null).filter(v=>v!==null);
   if(!e.length) return;
-
   spawnedIndex = e[Math.floor(Math.random()*e.length)];
   grid[spawnedIndex] = Math.random() < 0.9 ? 2 : 4;
 }
 
-
 function slide(arr){
   arr=arr.filter(v=>v);
   for(let i=0;i<arr.length-1;i++){
-    if(arr[i]===arr[i+1]){
-      arr[i]*=2;
-      score+=arr[i];
-      arr[i+1]=0;
-    }
+    if(arr[i]===arr[i+1]){ arr[i]*=2; score+=arr[i]; arr[i+1]=0; }
   }
   arr=arr.filter(v=>v);
   while(arr.length<4)arr.push(0);
@@ -343,11 +257,9 @@ function slide(arr){
 }
 
 function move(dir){
-  if(gameOver) return;   // 🚫 已结束，什么都不干
-
+  if(gameOver) return;
   let moved=false;
   let g=[...grid];
-
   const idx=(i,j)=>{
     if(dir==="L")return i*4+j;
     if(dir==="R")return i*4+3-j;
@@ -363,11 +275,7 @@ function move(dir){
       if(grid[k]!==s[j]){grid[k]=s[j];moved=true;}
     }
   }
-  if(moved){
-    randomAdd();
-    draw();
-    checkOver();
-  }
+  if(moved){ randomAdd(); draw(); checkOver(); }
 }
 
 function checkOver(){
@@ -376,174 +284,123 @@ function checkOver(){
     if(i%4<3 && grid[i]===grid[i+1])return;
     if(i<12 && grid[i]===grid[i+4])return;
   }
-
-  gameOver = true;   // 🔒 锁死操作
-  statusEl.textContent = "Game over☠️☠️☠️";
-  openModal();
-}
-
-
-
-/* 排行榜 */
-function formatTime(t){
-  const utc = new Date(t).getTime();
-  const beijing = new Date(utc + 8 * 60 * 60 * 1000);
-
-  const Y = beijing.getFullYear();
-  const M = String(beijing.getMonth() + 1).padStart(2, "0");
-  const D = String(beijing.getDate()).padStart(2, "0");
-  const h = String(beijing.getHours()).padStart(2, "0");
-  const m = String(beijing.getMinutes()).padStart(2, "0");
-  const s = String(beijing.getSeconds()).padStart(2, "0");
-
-  return `${Y}-${M}-${D} ${h}:${m}:${s}`;
-}
-
-
-
-
-
-async function loadRank(){
-  let { data } = await db
-    .from("scores")
-    .select("*")
-    .order("score",{ ascending:false })
-    .limit(50);
-
-  rankEl.innerHTML=`
-    <div class="rank-title"> 🌍 组织排行榜 ⭐ </div>
-    <div class="rank-header">
-      <div class="rank-index">#</div>
-      <div class="rank-name">玩家</div>
-      <div class="rank-score">分数</div>
-      <div class="rank-time">时间</div>
-    </div>
-<div class="rank-list">
-  ${data.map((v,i)=>{
-    let displayIndex = i===0 ? "👑1" : i+1;  // 第一名显示王冠
-    let nameColor = i === 0 ? "#FFD700" : i === 1 ? "#C0C0C0" : i === 2 ? "#CD7F32" : "#e0e0e0"; // 前三名金、银、铜，其余默认
-    return `
-      <div class="rank-row">
-        <div class="rank-index">${displayIndex}</div>
-        <div class="rank-name" style="color:${nameColor};" title="${v.name}">${v.name}</div>
-        <div class="rank-score">${v.score}</div>
-        <div class="rank-time">${formatTime(v.created_at)}</div>
-      </div>
-    `;
-  }).join("")}
-</div>
-
-  `;
-}
-
-
-
-
-/* ======================
-   键盘方向键控制
-   ====================== */
-document.addEventListener("keydown", e => {
-  // 阻止方向键导致页面滚动
-  if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) {
-    e.preventDefault();
-  }
-
-  // 根据方向键执行对应移动
-  if(e.key==="ArrowLeft") move("L");
-  if(e.key==="ArrowRight") move("R");
-  if(e.key==="ArrowUp") move("U");
-  if(e.key==="ArrowDown") move("D");
-});
-
-
-/* ======================
-   触摸滑动控制（手机端）
-   只绑定在游戏区域
-   ====================== */
-let sx, sy;
-
-// 手指按下，记录起始坐标
-gridEl.addEventListener("touchstart", e=>{
-  e.preventDefault();
-  sx = e.touches[0].clientX;
-  sy = e.touches[0].clientY;
-},{ passive:false });
-
-// 手指抬起，计算滑动方向
-gridEl.addEventListener("touchend", e=>{
-  e.preventDefault();
-  let dx = e.changedTouches[0].clientX - sx;
-  let dy = e.changedTouches[0].clientY - sy;
-
-  // 横向滑动
-  if(Math.abs(dx) > Math.abs(dy)){
-    if(dx > 30) move("R");
-    if(dx < -30) move("L");
-  }
-  // 纵向滑动
-  else{
-    if(dy > 30) move("D");
-    if(dy < -30) move("U");
-  }
-},{ passive:false });
-
-
-/* ======================
-   游戏重置（重新开始）
-   ====================== */
-function restart(){
-  grid.fill(0);          // 清空棋盘
-  score = 0;             // 重置得分
-  gameOver = false;      // 解锁操作
-  statusEl.textContent = "";
-
-  randomAdd();           // 生成初始两个数字
-  randomAdd();
-  draw();                // 重绘界面
-}
-
-
-/* ======================
-   游戏结束弹窗
-   ====================== */
-function openModal(){
+  gameOver = true;
   document.getElementById("finalScore").textContent = score;
   document.getElementById("modal").style.display = "flex";
 }
 
+function formatDateTime(dateStr){
+  if(!dateStr) return "";
+  const utc = new Date(dateStr).getTime();
+  const beijing = new Date(utc + 8*60*60*1000);
+  const Y = beijing.getFullYear();
+  const M = String(beijing.getMonth()+1).padStart(2,"0");
+  const D = String(beijing.getDate()).padStart(2,"0");
+  const h = String(beijing.getHours()).padStart(2,"0");
+  const m = String(beijing.getMinutes()).padStart(2,"0");
+  const s = String(beijing.getSeconds()).padStart(2,"0");
+  return `${Y}-${M}-${D} ${h}:${m}:${s}`;
+}
 
-/* ======================
-   提交成绩到排行榜
-   ====================== */
+async function loadRank(){
+  rankEl.style.opacity = "0.7"; 
+  try {
+    let { data, error } = await db.from("scores").select("*").order("score",{ ascending:false }).limit(50);
+    if(error) throw error;
+    
+    rankEl.innerHTML=`
+      <div class="rank-title">
+        <button class="refresh-btn" onclick="loadRank()">刷新</button>
+        <div style="flex:1; text-align:center;">🌍 组织排行榜 ⭐</div>
+        <div class="rank-spacer"></div> 
+      </div>
+      <div class="rank-header">
+        <div class="rank-index">#</div>
+        <div>玩家</div>
+        <div class="rank-score">分数</div> 
+        <div style="text-align:right; padding-right:10px;">时间</div>
+      </div>
+      <div class="rank-list">
+        ${data.map((v,i)=>`
+          <div class="rank-row">
+            <div class="rank-index">${i===0?"👑1":i+1}</div>
+            <div class="rank-name" style="color:${i<3?['#FFD700','#C0C0C0','#CD7F32'][i]:'#e0e0e0'}">${v.name}</div>
+            <div class="rank-score">${v.score}</div> 
+            <div class="rank-time">${formatDateTime(v.created_at)}</div>
+          </div>`).join("")}
+      </div>`;
+  } catch (err) {
+    rankEl.innerHTML = `
+      <div class="rank-title">
+        <button class="refresh-btn" onclick="loadRank()">重试</button>
+        <div style="flex:1; text-align:center;">同步失败 📡</div>
+        <div class="rank-spacer"></div>
+      </div>
+      <div style="text-align:center; padding:20px; font-size:11px; opacity:0.6;">网络连接不稳定，请点击重试</div>`;
+  } finally {
+    rankEl.style.opacity = "1";
+  }
+}
+
+document.addEventListener("keydown", e => {
+  if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) e.preventDefault();
+  if(e.key==="ArrowLeft") move("L"); if(e.key==="ArrowRight") move("R");
+  if(e.key==="ArrowUp") move("U"); if(e.key==="ArrowDown") move("D");
+});
+
+let sx, sy;
+gridEl.addEventListener("touchstart", e=>{ sx=e.touches[0].clientX; sy=e.touches[0].clientY; },{passive:false});
+gridEl.addEventListener("touchend", e=>{
+  let dx=e.changedTouches[0].clientX-sx; let dy=e.changedTouches[0].clientY-sy;
+  if(Math.abs(dx)>Math.abs(dy)){ if(Math.abs(dx)>30) move(dx>0?"R":"L"); }
+  else { if(Math.abs(dy)>30) move(dy>0?"D":"U"); }
+},{passive:false});
+
+function restart(){ grid.fill(0); score=0; gameOver=false; randomAdd(); randomAdd(); draw(); document.getElementById("modal").style.display="none"; }
+function closeModal(){ document.getElementById("modal").style.display="none"; }
+
 async function submitScore(){
-  let name = document.getElementById("playerName").value.trim() || "匿名玩家";
+  const btn = event.target;
+  const nameInput = document.getElementById("playerName");
+  let name = nameInput.value.trim() || "匿名玩家";
 
-  await db.from("scores").insert({
-    name,
-    score
-  });
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = "传送中...";
+  btn.style.opacity = "0.5";
 
-  document.getElementById("modal").style.display = "none";
-  loadRank();   // 刷新排行榜
+  try {
+    const { error } = await db.from("scores").insert({ name, score });
+    if (error) throw error;
+    closeModal();
+    await loadRank(); 
+  } catch (err) {
+    alert("上传失败，请检查网络后重试");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+    btn.style.opacity = "1";
+  }
 }
 
-
-/* ======================
-   关闭弹窗但不提交
-   ====================== */
-function closeModal(){
-  document.getElementById("modal").style.display = "none";
+function initSnow() {
+  const bg = document.getElementById("snow-bg");
+  bg.innerHTML = "";
+  for(let i=0; i<80; i++) {
+    const s = document.createElement("span");
+    s.textContent = ["❄️", "❄️", "🎄", "🎁"][Math.floor(Math.random()*4)];
+    s.style.left = Math.random() * 100 + "vw";
+    s.style.fontSize = (8 + Math.random()*15) + "px";
+    s.style.animationDuration = (6 + Math.random()*12) + "s";
+    s.style.animationDelay = Math.random() * -20 + "s";
+    s.style.setProperty('--sw', (Math.random()*160 - 80) + "px");
+    s.style.setProperty('--r', Math.random()*720 + "deg");
+    s.style.setProperty('--op', (0.3 + Math.random()*0.3));
+    bg.appendChild(s);
+  }
 }
 
-
-/* ======================
-   页面加载后启动游戏
-   ====================== */
-restart();
-loadRank();
-
+restart(); loadRank(); initSnow();
 </script>
 </body>
 </html>
-
-
