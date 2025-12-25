@@ -7,22 +7,17 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
 <script>
-if (!window.supabase) {
-  document.write('<script src="https://unpkg.com/@supabase/supabase-js@2.39.7"><\/script>');
-}
-</script>
-<script>
-if (!window.supabase) {
-  document.write('<script src="https://cdn.staticfile.org/supabase-js/2.39.7/supabase.min.js"><\/script>');
-}
-</script>
-<script>
-if (!window.supabase) {
-  document.write('<script src="https://cdn.bootcdn.net/ajax/libs/supabase-js/2.39.7/supabase.min.js"><\/script>');
-}
+  if (!window.supabase) {
+    document.write('<script src="https://unpkg.com/@supabase/supabase-js@2.39.7"><\/script>');
+  }
 </script>
 
-
+<!-- ② 紧跟着，立刻检查有没有加载成功 -->
+<script>
+if (!window.supabase) {
+  alert("Supabase SDK 加载失败，请刷新或检查网络");
+}
+</script>
 
 <style>
 *{ box-sizing:border-box; }
@@ -445,7 +440,3 @@ loadRank();
 </script>
 </body>
 </html>
-
-
-
-
