@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>2048</title>
+<title>🎮2048</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7"></script>
 <script>
@@ -205,17 +205,17 @@ button{
 
   <button onclick="restart()">重新开始</button>
 
-  <div class="rank" id="rank">正在读取组织机密…</div>
+  <div class="rank" id="rank">正在读取排行榜…</div>
 </div>
 
 <div class="modal" id="modal">
   <div class="modal-box">
-    <div style="text-align:center; font-weight:bold;">Game over</div>
+    <div style="text-align:center; font-weight:bold;">Game over!</div>
     <div>你的得分是：<span id="finalScore"></span></div>
-    <div style="font-size:13px; opacity:0.8; margin-bottom:4px;">请输入昵称！组织上会记住你的...</div>
+    <div style="font-size:13px; opacity:0.8; margin-bottom:4px;">请输入昵称...组织上会记住你的!</div>
     <input id="playerName" placeholder="匿名玩家" maxlength="16" style="width:100%; padding:6px; border-radius:4px; border:none;">
     <div style="display:flex; gap:8px; justify-content:center; margin-top:8px;">
-      <button onclick="submitScore()" id="subBtn">记入组织</button>
+      <button onclick="submitScore()" id="subBtn">记录得分</button>
       <button onclick="closeModal()">概不留名</button>
     </div>
   </div>
@@ -306,7 +306,7 @@ function checkOver(){
     if(i<12 && grid[i]===grid[i+4])return;
   }
   gameOver = true;
-  statusEl.textContent = "Game over☠️☠️☠️";
+  statusEl.textContent = "Game over!☠️☠️☠️";
   openModal();
 }
 
@@ -332,7 +332,7 @@ async function loadRank(){
     rankEl.innerHTML=`
       <div class="rank-title">
         <button class="refresh-btn" onclick="loadRank()">刷新</button>
-        <span>🌍 组织排行榜 ⭐</span>
+        <span>🌍 排行榜 ⭐</span>
         <div style="width:30px"></div>
       </div>
       <div class="rank-header">
@@ -364,7 +364,7 @@ async function loadRank(){
         <span style="color:#ff6b6b;">同步失败 📡</span>
         <div style="width:30px"></div>
       </div>
-      <div style="text-align:center; padding:15px; font-size:11px; opacity:0.6;">无法连接到组织服务器，请检查网络。</div>
+      <div style="text-align:center; padding:15px; font-size:11px; opacity:0.6;">无法连接排行榜，请检查网络。</div>
     `;
   }
   rankEl.style.opacity = "1";
@@ -427,7 +427,7 @@ async function submitScore(){
     alert("分数提交失败，请重试。");
   } finally {
     btn.disabled = false;
-    btn.textContent = "记入组织";
+    btn.textContent = "记录得分";
   }
 }
 
